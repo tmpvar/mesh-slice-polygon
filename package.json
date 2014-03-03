@@ -1,0 +1,25 @@
+{
+  "name": "mesh-slice-polygon",
+  "version": "0.1.0",
+  "description": "slice a mesh with a plane and return the resulting polygon(s)",
+  "keywords": [],
+  "main": "mesh-slice-polygon.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/tmpvar/mesh-slice-polygon.git"
+  },
+  "author": "Elijah Insua <tmpvar@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tmpvar/mesh-slice-polygon/issues"
+  },
+  "devDependencies": {
+    "mocha": "1.x",
+    "istanbul": "*"
+  },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha test/test.js -R spec",
+    "cover": "istanbul cover _mocha -- test/test.js -R spec",
+    "minify": "browserify -e mesh-slice-polygon.js | uglifyjs > mesh-slice-polygon.min.js"
+  }
+}

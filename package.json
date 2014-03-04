@@ -21,5 +21,9 @@
     "test": "node_modules/mocha/bin/mocha test/test.js -R spec",
     "cover": "istanbul cover _mocha -- test/test.js -R spec",
     "minify": "browserify -e mesh-slice-polygon.js | uglifyjs > mesh-slice-polygon.min.js"
+  },
+  "dependencies": {
+    "vec2": "~1.5.0",
+    "polygon": "~0.1.0"
   }
 }

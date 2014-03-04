@@ -219,7 +219,9 @@
         );
         break;
       } else if (isects.length === 2) {
-        this.group.push(isects[0]);
+        this.group.push(
+          Vec2(isects[0].position[0], isects[0].position[1])
+        );
 
         var shared = this.sharedTriangle(
           tri.verts[isects[0].shared[0]],
@@ -240,7 +242,13 @@
           tri = shared;
         } else {
           if (this.group.length > 0) {
-            this.groups.push(this.group);
+            var poly = new Polygon(this.group);
+
+            if (poly.area() < 0) {
+              poly.rewind(true);
+            }
+
+            this.groups.push(poly);
             this.group = [];
           }
           break;

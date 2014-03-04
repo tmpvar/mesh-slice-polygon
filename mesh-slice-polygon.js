@@ -63,18 +63,18 @@
   }
 
   ZPlane.prototype.intersect = function(start, end) {
-    var tmp = vec3.fromValues(0, 0, 0)
+    var tmp = vec3.create();
     var num = vec3.dot(
       this.normal,
       vec3.subtract(
-        vec3.fromValues(0, 0, 0),
+        tmp,
         this.position,
         start.position
       )
     );
 
     var line = vec3.subtract(
-      vec3.fromValues(0, 0, 0),
+      tmp,
       end.position,
       start.position
     );
@@ -84,10 +84,10 @@
     var res = num/den;
     if (!isNaN(res) && 0 <= res && res <= 1.0) {
       var isect = vec3.add(
-        vec3.fromValues(0, 0, 0),
+        tmp,
         start.position,
         vec3.multiply(
-          vec3.fromValues(0, 0, 0),
+          tmp,
           line,
           vec3.fromValues(res, res, res)
         )
@@ -153,6 +153,12 @@
   };
 
   MeshSlicePolygon.prototype.addTriangle = function(a, b, c) {
+    if (Array.isArray(a)) {
+      b = a[1];
+      c = a[2];
+      a = a[0];
+    }
+
     this.dirty = true;
     var a = this.upsertVert(a[0], a[1], a[2]);
     var b = this.upsertVert(b[0], b[1], b[2]);
@@ -160,15 +166,23 @@
 
     var triangle = new Triangle(a, b, c);
 
-    // TODO: we don't really need a loop here...
+    if (!this.sharedTriangles[a.id]) {
+      this.sharedTriangles[a.id] = [triangle];
+    } else {
+      this.sharedTriangles[a.id].push(triangle);
+    }
 
-    [a, b, c].forEach(function(vertex) {
-      if (!this.sharedTriangles[vertex.id]) {
-        this.sharedTriangles[vertex.id] = [];
-      }
+    if (!this.sharedTriangles[b.id]) {
+      this.sharedTriangles[b.id] = [triangle];
+    } else {
+      this.sharedTriangles[b.id].push(triangle);
+    }
 
-      this.sharedTriangles[vertex.id].push(triangle);
-    }.bind(this));
+    if (!this.sharedTriangles[c.id]) {
+      this.sharedTriangles[c.id] = [triangle];
+    } else {
+      this.sharedTriangles[c.id].push(triangle);
+    }
 
     this.triangles.push(triangle);
   };
@@ -259,6 +273,10 @@
     }
   };
 
+  MeshSlicePolygon.prototype.sortByZAscending = function(a, b) {
+    return (a.area() > b.area()) ? -1 : 1;
+  };
+
   MeshSlicePolygon.prototype.slice = function(z) {
     this.plane.position[2] = z;
 
@@ -286,7 +304,34 @@
       }
     }
 
+    this.groups.sort(this.sortByZAscending);
+
     return this.groups;
+  };
+
+  MeshSlicePolygon.prototype.markHoles = function(hulls) {
+    for (var i = 0; i<hulls.length; i++) {
+
+      var subject = hulls[i];
+
+      if (subject.isHole) {
+        continue;
+      }
+
+      subject.isHole = false
+      var area = subject.area();
+
+      for (var j = 0; j < i; j++) {
+        if (hulls[j].area() < area) {
+          break;
+        }
+
+        subject.isHole = hulls[j].containsPolygon(subject);
+        break;
+      }
+
+      subject.rewind(!subject.isHole);
+    }
   };
 
   if (typeof module !== "undefined" && typeof module.exports == "object") {

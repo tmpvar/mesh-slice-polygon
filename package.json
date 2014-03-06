@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "vec2": "~1.5.0",
-    "polygon": "~0.1.0"
+    "polygon": "~0.1.0",
+    "gl-matrix": "~2.0.0"
   }
 }

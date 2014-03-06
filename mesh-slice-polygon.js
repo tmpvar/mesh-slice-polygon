@@ -1,4 +1,24 @@
 (function() {
+  if (typeof require !== 'undefined') {
+    var vec3 = require('gl-matrix').vec3;
+    var Vec2 = require('vec2');
+    var Polygon = require('polygon');
+  } else {
+    var vec3 = window.vec3;
+    var Vec2 = window.Vec2;
+    var Polygon = window.Polygon;
+  }
+
+  if (!self.console) {
+    self.console = {
+      log : function(msg) {
+        var args = [];
+        Array.prototype.push.apply(args, arguments)
+        self.postMessage({ name : 'debug', data: args });
+      }
+    };
+  }
+
   function Vertex(x, y, z) {
     if (x instanceof Float32Array) {
       this.position = x;
@@ -98,7 +118,7 @@
   };
 
   function MeshSlicePolygon() {
-    this.plane = new ZPlane(sliceZ)
+    this.plane = new ZPlane(0)
     this.seenVerts = {};
     this.sharedTriangles = {};
     this.triangles = [];
@@ -226,11 +246,11 @@
       }
 
       if (isects.length === 3) {
-        console.log('PARALLEL',
-          this.sharedTriangles[tri.verts[0].id].length,
-          this.sharedTriangles[tri.verts[1].id].length,
-          this.sharedTriangles[tri.verts[2].id].length
-        );
+        console.log('PARALLEL');
+        //   this.sharedTriangles[tri.verts[0].id].length,
+        //   this.sharedTriangles[tri.verts[1].id].length,
+        //   this.sharedTriangles[tri.verts[2].id].length
+        // );
         break;
       } else if (isects.length === 2) {
         this.group.push(
@@ -255,7 +275,7 @@
           last = tri.id;
           tri = shared;
         } else {
-          if (this.group.length > 0) {
+          if (this.group && this.group.length > 0) {
             var poly = new Polygon(this.group);
 
             if (poly.area() < 0) {

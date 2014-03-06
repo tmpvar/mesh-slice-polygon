@@ -159,12 +159,15 @@
   MeshSlicePolygon.prototype.sharedTriangle = function(a, b, ignore) {
     var aa = this.sharedTriangles[a.id];
     var ab = this.sharedTriangles[b.id];
-
-    for (var i = 0; i<aa.length; i++) {
-      var ai = aa[i];
-      for (var j = 0; j<ab.length; j++) {
-        if (ai.id === ab[j].id && ignore.indexOf(ai.id) === -1) {
-          return ai;
+    if (aa && aa.length) {
+      for (var i = 0; i<aa.length; i++) {
+        var ai = aa[i];
+        if (ab && ab.length) {
+          for (var j = 0; j<ab.length; j++) {
+            if (ai.id === ab[j].id && ignore.indexOf(ai.id) === -1) {
+              return ai;
+            }
+          }
         }
       }
     }
@@ -253,9 +256,6 @@
         // );
         break;
       } else if (isects.length === 2) {
-        this.group.push(
-          Vec2(isects[0].position[0], isects[0].position[1])
-        );
 
         var shared = this.sharedTriangle(
           tri.verts[isects[0].shared[0]],
@@ -268,6 +268,14 @@
             tri.verts[isects[1].shared[0]],
             tri.verts[isects[1].shared[1]],
             [tri.id, last, startTri]
+          );
+
+          this.group.push(
+            Vec2(isects[1].position[0], isects[1].position[1])
+          );
+        } else {
+          this.group.push(
+            Vec2(isects[0].position[0], isects[0].position[1])
           );
         }
 
@@ -330,27 +338,29 @@
   };
 
   MeshSlicePolygon.prototype.markHoles = function(hulls) {
-    for (var i = 0; i<hulls.length; i++) {
+    if (hulls && hulls.length) {
+      for (var i = 0; i<hulls.length; i++) {
 
-      var subject = hulls[i];
+        var subject = hulls[i];
 
-      if (subject.isHole) {
-        continue;
-      }
+        if (subject.isHole) {
+          continue;
+        }
 
-      subject.isHole = false
-      var area = subject.area();
+        subject.isHole = false
+        var area = subject.area();
 
-      for (var j = 0; j < i; j++) {
-        if (hulls[j].area() < area) {
+        for (var j = 0; j < i; j++) {
+          if (hulls[j].area() < area) {
+            break;
+          }
+
+          subject.isHole = hulls[j].containsPolygon(subject);
           break;
         }
 
-        subject.isHole = hulls[j].containsPolygon(subject);
-        break;
+        subject.rewind(!subject.isHole);
       }
-
-      subject.rewind(!subject.isHole);
     }
   };
 

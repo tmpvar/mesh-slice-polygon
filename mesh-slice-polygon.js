@@ -183,9 +183,9 @@
     }
 
     this.dirty = true;
-    var a = this.upsertVert(a[0], a[1], a[2]);
-    var b = this.upsertVert(b[0], b[1], b[2]);
-    var c = this.upsertVert(c[0], c[1], c[2]);
+    a = this.upsertVert(a[0], a[1], a[2]);
+    b = this.upsertVert(b[0], b[1], b[2]);
+    c = this.upsertVert(c[0], c[1], c[2]);
 
     var triangle = new Triangle(a, b, c);
 
@@ -231,30 +231,69 @@
     var last = startTri;
     while (tri) {
 
-      if (this.seenTriangles[tri.id]) {
-        break;
-      }
-
       this.seenTriangles[tri.id] = true;
 
-      var isects = [];
+      var isects = [], shared = null;
       for (var i=0; i<isectTests.length; i++) {
         var test = isectTests[i];
         var isect = this.plane.intersect(tri.verts[test[0]], tri.verts[test[1]])
         if (isect) {
-          var vert = this.upsertVert(isect);
+          var vert = new Vertex(isect[0], isect[1], isect[2]);
           vert.shared = test;
+
+
           isects.push(vert);
+
+          shared = this.sharedTriangle(
+            tri.verts[test[0]],
+            tri.verts[test[1]],
+            [tri.id, last, startTri]
+          );
+
+          if (shared) {
+
+            this.group.push(
+              Vec2(isect[0], isect[1])
+            );
+
+            if (tri.id !== startTri) {
+              break;
+            }
+          }
         }
       }
 
-      if (isects.length === 3) {
+      if (shared) {
+        last = tri.id;
+        tri = shared;
+      } else {
+        if (this.group && this.group.length > 0) {
+          this.group.push(this.group[0]);
+          this.groups.push(new Polygon(this.group));
+          this.group = [];
+        }
+
+        break;
+      }
+
+
+/*      if (isects.length === 1) {
+        this.group.push(
+          Vec2(isects[0].position[0], isects[0].position[1])
+        );
+      } else if (isects.length === 3) {
+
+        for (var i=0; i<isects.length; i++) {
+          this.group.push(
+            Vec2(isects[i].position[0], isects[i].position[1])
+          );
+        }
         console.log('PARALLEL');
         //   this.sharedTriangles[tri.verts[0].id].length,
         //   this.sharedTriangles[tri.verts[1].id].length,
         //   this.sharedTriangles[tri.verts[2].id].length
         // );
-        break;
+        //break;
       } else if (isects.length === 2) {
 
         var shared = this.sharedTriangle(
@@ -270,12 +309,14 @@
             [tri.id, last, startTri]
           );
 
-          this.group.push(
-            Vec2(isects[1].position[0], isects[1].position[1])
-          );
+          if (shared) {
+            this.group.push(
+              Vec2(isects[0].position[0], isects[0].position[1])
+            );
+          }
         } else {
           this.group.push(
-            Vec2(isects[0].position[0], isects[0].position[1])
+            Vec2(isects[1].position[0], isects[1].position[1])
           );
         }
 
@@ -293,16 +334,24 @@
             this.groups.push(poly);
             this.group = [];
           }
-          break;
+          //break;
         }
       } else {
         break;
-      }
+      }    */
     }
+
   };
 
   MeshSlicePolygon.prototype.sortByZAscending = function(a, b) {
-    return (a.area() > b.area()) ? -1 : 1;
+    var aa = a.area();
+    var ba = b.area();
+
+    return (aa > ba) ? -1 : 1;
+  };
+
+  MeshSlicePolygon.prototype.sortByAreaDescending = function(a, b) {
+    return (Math.abs(a.area()) > Math.abs(b.area())) ? -1 : 1;
   };
 
   MeshSlicePolygon.prototype.slice = function(z) {
@@ -332,34 +381,35 @@
       }
     }
 
-    this.groups.sort(this.sortByZAscending);
+    // Ensure the groups are ordered by area
+    this.groups.sort(this.sortByAreaDescending);
 
     return this.groups;
   };
 
   MeshSlicePolygon.prototype.markHoles = function(hulls) {
+    var holes = 0, i;
     if (hulls && hulls.length) {
-      for (var i = 0; i<hulls.length; i++) {
+
+      for (var i = 1; i<hulls.length; i++) {
+        hulls[i].rewind(true);
+      }
+
+      hulls.sort(this.sortByAreaDescending);
+
+      for (i = 1; i<hulls.length; i++) {
 
         var subject = hulls[i];
+        var last = hulls[i-1];
 
-        if (subject.isHole) {
-          continue;
-        }
-
-        subject.isHole = false
-        var area = subject.area();
-
-        for (var j = 0; j < i; j++) {
-          if (hulls[j].area() < area) {
-            break;
+        if (last.containsPolygon(subject)) {
+          subject.isHole = !last.isHole;
+          if (subject.isHole) {
+            subject.rewind(true);
           }
-
-          subject.isHole = hulls[j].containsPolygon(subject);
-          break;
+        } else {
+          subject.parent = null;
         }
-
-        subject.rewind(!subject.isHole);
       }
     }
   };

@@ -275,72 +275,7 @@
 
         break;
       }
-
-
-/*      if (isects.length === 1) {
-        this.group.push(
-          Vec2(isects[0].position[0], isects[0].position[1])
-        );
-      } else if (isects.length === 3) {
-
-        for (var i=0; i<isects.length; i++) {
-          this.group.push(
-            Vec2(isects[i].position[0], isects[i].position[1])
-          );
-        }
-        console.log('PARALLEL');
-        //   this.sharedTriangles[tri.verts[0].id].length,
-        //   this.sharedTriangles[tri.verts[1].id].length,
-        //   this.sharedTriangles[tri.verts[2].id].length
-        // );
-        //break;
-      } else if (isects.length === 2) {
-
-        var shared = this.sharedTriangle(
-          tri.verts[isects[0].shared[0]],
-          tri.verts[isects[0].shared[1]],
-          [tri.id, last, startTri]
-        );
-
-        if (!shared) {
-          shared = this.sharedTriangle(
-            tri.verts[isects[1].shared[0]],
-            tri.verts[isects[1].shared[1]],
-            [tri.id, last, startTri]
-          );
-
-          if (shared) {
-            this.group.push(
-              Vec2(isects[0].position[0], isects[0].position[1])
-            );
-          }
-        } else {
-          this.group.push(
-            Vec2(isects[1].position[0], isects[1].position[1])
-          );
-        }
-
-        if (shared && shared.id !== tri.id && shared.id !== startTri) {
-          last = tri.id;
-          tri = shared;
-        } else {
-          if (this.group && this.group.length > 0) {
-            var poly = new Polygon(this.group);
-
-            if (poly.area() < 0) {
-              poly.rewind(true);
-            }
-
-            this.groups.push(poly);
-            this.group = [];
-          }
-          //break;
-        }
-      } else {
-        break;
-      }    */
     }
-
   };
 
   MeshSlicePolygon.prototype.sortByZAscending = function(a, b) {

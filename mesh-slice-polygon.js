@@ -278,13 +278,6 @@
     }
   };
 
-  MeshSlicePolygon.prototype.sortByZAscending = function(a, b) {
-    var aa = a.area();
-    var ba = b.area();
-
-    return (aa > ba) ? -1 : 1;
-  };
-
   MeshSlicePolygon.prototype.sortByAreaDescending = function(a, b) {
     return (Math.abs(a.area()) > Math.abs(b.area())) ? -1 : 1;
   };

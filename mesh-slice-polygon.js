@@ -9,7 +9,8 @@
     var Polygon = window.Polygon;
   }
 
-  if (!self.console) {
+  // enable webworker debugging
+  if (typeof self !== 'undefined' && !self.console) {
     self.console = {
       log : function(msg) {
         var args = [];
@@ -45,10 +46,6 @@
   };
 
   Vertex.prototype = {
-    near : function(vert, threshold) {
-      return vec3.dist(this.position, vert.position) < (threshold || 0.1)
-    },
-
     toString : function() {
       return Vertex.toString(this.position);
     }
@@ -103,6 +100,7 @@
 
     var res = num/den;
     if (!isNaN(res) && 0 <= res && res <= 1.0) {
+
       var isect = vec3.add(
         tmp,
         start.position,
@@ -214,6 +212,21 @@
     return (a.id > b.id) ? -1 : 1;
   };
 
+  var collinear = function(a, b, c) {
+    var r = a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y);
+    return Vec2.clean(r) === 0;
+  };
+
+  var rotateArray = function(array, count) {
+    var len = array.length >>> 0,
+        count = count >> 0;
+
+    Array.prototype.unshift.apply(array, Array.prototype.splice.call(array, count % len, len));
+    return array;
+  };
+
+
+
   MeshSlicePolygon.prototype.sort = function() {
     Object.keys(this.sharedTriangles).forEach(function(key) {
       this.sharedTriangles[key].sort(sortShared);
@@ -269,7 +282,31 @@
       } else {
         if (this.group && this.group.length > 0) {
           this.group.push(this.group[0]);
-          this.groups.push(new Polygon(this.group));
+
+          var poly = new Polygon(this.group).clean();
+
+          poly.points = poly.points.filter(function(c, i) {
+            var p = poly.point(i-1);
+            var n = poly.point(i+1);
+            return !collinear(p, c, n);
+          });
+
+          // Rotate the array to start nearest the lowest extent
+          var min = Vec2(this.bounds.min[0], this.bounds.min[1]);
+
+          var closestToMinIdx = 0;
+          var closestToMinVal = min.subtract(poly.points[0], true).lengthSquared()
+          for (var i=1; i<poly.points.length; i++) {
+            var currentVal = min.subtract(poly.points[i], true).lengthSquared();
+            if (currentVal < closestToMinVal) {
+              closestToMinIdx = i;
+              closestToMinVal = currentVal;
+            }
+          }
+
+          rotateArray(poly.points, closestToMinIdx);
+
+          this.groups.push(poly);
           this.group = [];
         }
 

@@ -15,7 +15,8 @@
   },
   "devDependencies": {
     "mocha": "1.x",
-    "istanbul": "*"
+    "istanbul": "*",
+    "stl": "^0.1.1"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha test/test.js -R spec",

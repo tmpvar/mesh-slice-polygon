@@ -157,14 +157,12 @@
   MeshSlicePolygon.prototype.sharedTriangle = function(a, b, ignore) {
     var aa = this.sharedTriangles[a.id];
     var ab = this.sharedTriangles[b.id];
-    if (aa && aa.length) {
+    if (aa && aa.length && ab && ab.length) {
       for (var i = 0; i<aa.length; i++) {
         var ai = aa[i];
-        if (ab && ab.length) {
-          for (var j = 0; j<ab.length; j++) {
-            if (ai.id === ab[j].id && ignore.indexOf(ai.id) === -1) {
-              return ai;
-            }
+        for (var j = 0; j<ab.length; j++) {
+          if (ai.id === ab[j].id && ignore.indexOf(ai.id) === -1) {
+            return ai;
           }
         }
       }
@@ -212,9 +210,13 @@
     return (a.id > b.id) ? -1 : 1;
   };
 
+  var clean = function(v) {
+    return Math.round(v * 10000)/10000;
+  }
+
   var collinear = function(a, b, c) {
     var r = a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y);
-    return Vec2.clean(r) === 0;
+    return clean(r) === 0;
   };
 
   var rotateArray = function(array, count) {
@@ -224,8 +226,6 @@
     Array.prototype.unshift.apply(array, Array.prototype.splice.call(array, count % len, len));
     return array;
   };
-
-
 
   MeshSlicePolygon.prototype.sort = function() {
     Object.keys(this.sharedTriangles).forEach(function(key) {
@@ -251,6 +251,7 @@
         var test = isectTests[i];
         var isect = this.plane.intersect(tri.verts[test[0]], tri.verts[test[1]])
         if (isect) {
+          //console.log('isect', isect);
           var vert = new Vertex(isect[0], isect[1], isect[2]);
           vert.shared = test;
 
@@ -266,7 +267,7 @@
           if (shared) {
 
             this.group.push(
-              Vec2(isect[0], isect[1])
+              new Vec2(isect[0], isect[1])
             );
 
             if (tri.id !== startTri) {
@@ -283,13 +284,34 @@
         if (this.group && this.group.length > 0) {
           this.group.push(this.group[0]);
 
-          var poly = new Polygon(this.group).clean();
+          var poly = new Polygon(this.group);
+          var near = function(v1, v2) {
+            var d = v1.subtract(v2, true).abs();
+            return d.x < .0001 && d.y < .0001;
+          }
 
           poly.points = poly.points.filter(function(c, i) {
             var p = poly.point(i-1);
             var n = poly.point(i+1);
-            return !collinear(p, c, n);
+
+            if (near(c, n)) {
+              return false;
+            }
+            return true;
           });
+
+          var newPoly = [];
+          for (var i = 0; i<poly.points.length; i++) {
+            var p = poly.point(i-1);
+            var n = poly.point(i+1);
+            var c = poly.point(i);
+            if (!collinear(p, c, n)) {
+              newPoly.push(poly.points[i]);
+            }
+          }
+
+          poly.points = newPoly;
+
 
           // Rotate the array to start nearest the lowest extent
           var min = Vec2(this.bounds.min[0], this.bounds.min[1]);

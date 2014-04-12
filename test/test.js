@@ -9,7 +9,9 @@ var stldir = path.join(__dirname, 'stl');
 var ok = function(a, msg) { if (!a) throw new Error(msg || "not ok"); };
 var eq = function(a, b) { if (a!==b) throw new Error(a + " !== " + b); };
 var near = function(a, b, t) {
-  if (Math.abs(a - b) > (t || .0000000001)) {
+  t = t || 0.0001
+  var d = a.subtract(b, true).abs();
+  if (d.x > t || d.y > t) {
     throw new Error(a + " !== " + b);
   }
 };
@@ -85,9 +87,6 @@ describe('MeshSlicePolygon', function() {
 
     it('cube-20mm-with-hole.stl', function(t) {
       testStl('cube-20mm-with-hole.stl', function(array, z) {
-        if (array.length > 2) {
-          console.log(JSON.stringify(array, null, '  '));
-        }
 
         eq(array.length, 2);
         eq(array[0].points.length, 4);
@@ -118,7 +117,6 @@ describe('MeshSlicePolygon', function() {
         eq(array.length, 1);
         eq(array[0].points.length, 12);
 
-
         var expect = [
           [
             vec2(-2.3606, -2.3606),
@@ -144,10 +142,6 @@ describe('MeshSlicePolygon', function() {
 
     it('cube-20mm-monohole.stl', function(t) {
       testStl('cube-20mm-monohole.stl', function(array, z) {
-
-        if (array.length > 2) {
-          console.log(JSON.stringify(array, null, '  '));
-        }
 
         var expect = [
           [
@@ -242,6 +236,26 @@ describe('MeshSlicePolygon', function() {
           eq(expect[idx].length, poly.points.length);
           allEqual(expect[idx], poly.points);
         });
+      }, t);
+    });
+
+    it('pyramid-20mm.stl', function(t) {
+      testStl('pyramid-20mm.stl', function(array, z) {
+
+        if (z < 20) {
+          eq(array.length, 1);
+
+          var dz = (20-z)/2;
+
+          allEqual([
+            vec2(-dz, -dz),
+            vec2(-dz, dz),
+            vec2(dz, dz),
+            vec2(dz, -dz),
+          ], array[0].points)
+        } else {
+          eq(array.length, 0);
+        }
       }, t);
     });
 

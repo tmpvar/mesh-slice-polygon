@@ -316,19 +316,20 @@
           // Rotate the array to start nearest the lowest extent
           var min = Vec2(this.bounds.min[0], this.bounds.min[1]);
 
-          var closestToMinIdx = 0;
-          var closestToMinVal = min.subtract(poly.points[0], true).lengthSquared()
-          for (var i=1; i<poly.points.length; i++) {
-            var currentVal = min.subtract(poly.points[i], true).lengthSquared();
-            if (currentVal < closestToMinVal) {
-              closestToMinIdx = i;
-              closestToMinVal = currentVal;
+          if (poly && poly.length) {
+            var closestToMinIdx = 0;
+            var closestToMinVal = min.subtract(poly.points[0], true).lengthSquared()
+            for (var i=1; i<poly.points.length; i++) {
+              var currentVal = min.subtract(poly.points[i], true).lengthSquared();
+              if (currentVal < closestToMinVal) {
+                closestToMinIdx = i;
+                closestToMinVal = currentVal;
+              }
             }
+
+            rotateArray(poly.points, closestToMinIdx);
+            this.groups.push(poly);
           }
-
-          rotateArray(poly.points, closestToMinIdx);
-
-          this.groups.push(poly);
           this.group = [];
         }
 

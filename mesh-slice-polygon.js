@@ -388,15 +388,11 @@
       for (i = 1; i<hulls.length; i++) {
 
         var subject = hulls[i];
-        var last = hulls[i-1];
-
-        if (last.containsPolygon(subject)) {
-          subject.isHole = !last.isHole;
-          if (subject.isHole) {
-            subject.rewind(true);
+        for (var j = i; j>=0; j--) {
+          var target = hulls[j];
+          if (target.containsPolygon(subject)) {
+            subject.isHole = !target.isHole;
           }
-        } else {
-          subject.parent = null;
         }
       }
     }

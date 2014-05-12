@@ -392,6 +392,7 @@
           var target = hulls[j];
           if (target.containsPolygon(subject)) {
             subject.isHole = !target.isHole;
+            break;
           }
         }
       }

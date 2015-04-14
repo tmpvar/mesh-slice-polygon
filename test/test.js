@@ -71,7 +71,7 @@ test('MeshSlicePolygon#slice - cube-20mm.stl', function(t) {
   testStl('cube-20mm.stl', function(array, z) {
     t.equal(array.length, 1);
     t.equal(array[0].points.length, 4);
-
+console.log(array[0])
     allEqual([
       vec2(-10, -10),
       vec2(10, -10),
